@@ -53,25 +53,36 @@ def area_chat():
     contenedorDelChat = st.container(height=400, border= True)
     with contenedorDelChat: mostrar_historial()
 
+# Clase 9 - funciones
+def generar_respuestas(chat_completo):
+    respuesta_completa = ""
+    for frase in chat_completo:
+        print(frase.choices[0].delta.content)
+        if frase.choices[0].delta.content:
+            respuesta_completa += frase.choices[0].delta.content
+            yield frase.choices[0].delta.content
+    return respuesta_completa
 
-clienteUsuario = crear_usuario_groq()
-inicializar_estado()
-modelo = configurar_pagina()
-area_chat()
-mensaje = st.chat_input("Escribi tu mensaje:")
+# Main - > Todas las funciones para correr el Chatbot
+def main ():
+    clienteUsuario = crear_usuario_groq()
+    inicializar_estado()
+    modelo = configurar_pagina()
+    area_chat() #Nuevo 
+    mensaje = st.chat_input("Escribi tu mensaje:")
 
-
-#-----Dentro del condicional-------------------------------------
-if mensaje:
-    actualizar_historial("user", mensaje, "😁")
-    chat_completo = configurar_modelo(clienteUsuario, modelo, mensaje)
-    actualizar_historial("assistant", chat_completo, "🤖")
-    st.rerun()  
+    if mensaje:
+        actualizar_historial("user", mensaje, "😁")
+        chat_completo = configurar_modelo(clienteUsuario, modelo, mensaje)
+        if chat_completo:
+                with st.chat_message("assistant"):
+                    respuesta_completa = st.write_stream(generar_respuestas(chat_completo))
+                    actualizar_historial("assistant", respuesta_completa, "🤖")
+                    st.rerun()
+        
+        
+        
+        
+if __name__ == "__main__":
+    main()
     
-
-# modelo = configurar_pagina()
-# mensaje = st.chat_input("Escribi tu mensaje:")
-
-# Correr streamlit con la terminal de Python
-# python -m streamlit run MiChat.py (aca deben ingresar el nombre del archivo)
-
