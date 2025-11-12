@@ -34,7 +34,7 @@ def configurar_modelo(cliente, modelo, mensajeDeEntrada):
     return cliente.chat.completions.create(
         model = modelo,
         messages = [{"role":"user", "content": mensajeDeEntrada}],
-        stream = False
+        stream = True
     )
 
 def inicializar_estado():
@@ -86,3 +86,4 @@ def main ():
 if __name__ == "__main__":
     main()
     
+
