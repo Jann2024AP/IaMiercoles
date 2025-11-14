@@ -1,118 +1,107 @@
+# IMPORTAMOS Streamlit
+# pip install python | python -m install streamlit
+
+
+# pip install python | python -m install streamlit
+
 import streamlit as st
 from groq import Groq
-import time
 
-# Configuración de la página
-st.set_page_config(
-    page_title="Mi ChatBot - Talento Tec",
-    page_icon="🤖",
-    layout="centered"
-)
+st.set_page_config(page_title="Inteligencia Artificial Mariano Lupani", page_icon="clase6/img/logo.jpg")
+st.title("Mi primer chat con MarIAno")
 
-# Título principal
-st.title("🤖 Mi ChatBot Personalizado")
-st.markdown("---")
+nombre = st.text_input("Cual es tu nombre?")
+if st.button("Saludar!"):
+    if nombre == "":
+        st.write("Hola, ingrese su nombre")
+    else:
+        st.write(f"Hola {nombre}! Yo soy MarIAno, como puedo ayudarte?")
 
-# Sidebar para configuración
-with st.sidebar:
-    st.header("🔧 Configuración")
-    
-    # Obtener API Key de secrets.toml
-    try:
-        api_key = st.secrets["GROQ_API_KEY"]
-        st.success("✅ API Key cargada correctamente")
-    except Exception as e:
-        st.error("❌ No se pudo cargar la API Key")
-        st.stop()
-    
-    # 🎯 MODELOS QUE SÍ FUNCIONAN (de tu detección)
-    modelo = st.selectbox(
-        "Selecciona el modelo:",
-        [
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "meta-llama/llama-4-scout-17b-16e-instruct",
-            "qwen/qwen3-32b",
-            "meta-llama/llama-4-maverick-17b-128e-instruct"
-        ],
-        index=0
+MODELOS = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'deepseek-r1-distill-llama-70b']
+
+def configurar_pagina():
+    st.title("Mi Chat con MarIAno")
+    st.sidebar.title("Configuracion de MarIAno")
+
+    elegiModelo = st.sidebar.selectbox(
+        "Elegí un modelo",
+        options = MODELOS,
+        index = 0
     )
-    
-    # Configuraciones adicionales
-    temperatura = st.slider("Creatividad:", 0.1, 1.0, 0.7, 0.1)
-    max_tokens = st.slider("Longitud respuesta:", 100, 2000, 1024, 100)
-    
-    # Botón para limpiar chat
-    if st.button("🧹 Limpiar Chat"):
-        st.session_state.messages = [
-            {"role": "assistant", "content": "¡Hola! 👋 El chat ha sido limpiado. ¿En qué puedo ayudarte?"}
-        ]
-        st.rerun()
 
-# Estado inicial del chat
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "¡Hola! 👋 Soy tu ChatBot personalizado. ¿En qué puedo ayudarte?"}
-    ]
+    return elegiModelo
 
-# Mostrar historial del chat
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
 
-# Input del usuario
-if prompt := st.chat_input("Escribe tu mensaje aquí..."):
-    # Agregar mensaje del usuario
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # Procesar con Groq
-    try:
-        # Configurar cliente (usa la API Key de secrets.toml)
-        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-        
-        # Mostrar respuesta
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            message_placeholder.markdown("💭 Pensando...")
-            
-            # Llamar a la API con system message para evitar repeticiones
-            messages_with_system = [
-                {"role": "system", "content": "Eres un asistente útil y amigable. Responde de manera natural en español."}
-            ] + st.session_state.messages
-            
-            response = client.chat.completions.create(
-                model=modelo,
-                messages=messages_with_system,
-                temperature=temperatura,
-                max_tokens=max_tokens,
-                stream=False
-            )
-            
-            respuesta = response.choices[0].message.content
-            message_placeholder.markdown(respuesta)
-        
-        # Agregar al historial
-        st.session_state.messages.append({"role": "assistant", "content": respuesta})
-        
-        # 🖨️ Salida por terminal (para la captura)
-        print("=" * 60)
-        print("🚀 CHATBOT - Talento Tec")
-        print(f"📝 Modelo: {modelo}")
-        print(f"👤 Usuario: {prompt}")
-        print(f"🤖 Respuesta: {respuesta}")
-        print("=" * 60)
-        
-        # Recargar para mostrar el nuevo mensaje
-        st.rerun()
-        
-    except Exception as e:
-        error_msg = f"Error: {str(e)}"
-        st.error(f"❌ {error_msg}")
-        print(f"🚫 ERROR: {error_msg}")
+def crear_usuario_groq():
+    clave_secreta = st.secrets["CLAVE_API"]
+    return Groq(api_key=clave_secreta)
 
-# Footer
-st.markdown("---")
-st.caption("🎓 Desafío 9 - ChatBot con IA - Talento Tec")
+# python -m streamlit run index.py (aca deben ingresar el nombre del archivo)
+# como hago para que me mande al navegador???
+
+def configurar_modelo(cliente, modelo, mensajeDeEntrada):
+    return cliente.chat.completions.create(
+        model = modelo,
+        messages = [{"role":"user", "content": mensajeDeEntrada}],
+        stream = True
+    )
+
+def inicializar_estado():
+    if "mensajes" not in st.session_state:
+        st.session_state.mensajes = []
+
+def actualizar_historial(rol, contenido, avatar):
+    st.session_state.mensajes.append({"role": rol, "content": contenido, "avatar": avatar})
+
+def mostrar_historial():
+    for mensaje in st.session_state.mensajes:
+        with st.chat_message(mensaje["role"], avatar=mensaje["avatar"]):
+            st.markdown(mensaje["content"])
+
+def area_chat():
+    contenedorDelChat = st.container(height=400, border=True)
+    with contenedorDelChat:
+        mostrar_historial()
+
+def generar_respuestas(chat_completo):
+    respuesta_completa = ""
+    for frase in chat_completo:
+        if frase.choices[0].delta.content:
+            respuesta_completa += frase.choices[0].delta.content
+            yield frase.choices[0].delta.content
+    return respuesta_completa
+
+
+def main ():
+    clienteUsuario = crear_usuario_groq()
+    inicializar_estado()
+    modelo = configurar_pagina()
+    area_chat()  # Nuevo
+    mensaje = st.chat_input("Escribí tu mensaje:")
+
+    if mensaje:
+        actualizar_historial("user", mensaje, "😁")
+        chat_completo = configurar_modelo(clienteUsuario, modelo, mensaje)
+        if chat_completo:
+            with st.chat_message("assistant", avatar="🤖"):
+                respuesta_completa = st.write_stream(generar_respuestas(chat_completo))
+                actualizar_historial("assistant", respuesta_completa, "🤖")
+                st.rerun()
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+#chat_completo = configurar_modelo(clienteUsuario, modelo, mensaje)
+#actualizar_historial("assistant", chat_completo, "🤖")
+#st.rerun()
+
+
+#Para activar el entorno virtual
+#python -m venv venv
+#.\venv\Scripts\activate
+#python -m pip install streamlit
+#pip install groq
+#streamlit run MiChat.py
